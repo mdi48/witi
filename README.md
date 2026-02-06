@@ -1,4 +1,4 @@
-# WITI (Why Is This Installed)
+# WITI (Why Is This Installed?)
 A simple cli tool to give you information regarding the installation status of a given package. It will
 tell you if it was installed explicitly, or as a result of another package. It will also list what the package's dependencies and which installed packages require it.
 
