@@ -44,6 +44,12 @@ func getPackageInfo(pkgName string) (*Package, error) {
 		return nil, err
 	}
 
+	// get list of packages that require this package (reverse dependencies)
+	pkg.RequiredBy, err = findRequiredBy(pkgName)
+	if err != nil {
+		return nil, err
+	}
+
 	return pkg, nil
 }
 
@@ -109,4 +115,40 @@ func parseDescFile(descFile string) (*Package, error) {
 	return pkg, scanner.Err()
 }
 
-// IMPLEMENT HERE: function to find which packages require the given package (reverse dependencies)
+// searches all packages to find which ones depend on the given package (will benefit from efficiency improvements in the future, but for now it works)
+func findRequiredBy(pkgName string) ([]string, error) {
+	var requiredBy []string
+
+	entries, err := os.ReadDir(pacmanLocalDBPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		descFile := filepath.Join(pacmanLocalDBPath, entry.Name(), "desc")
+		pkg, err := parseDescFile(descFile)
+		if err != nil {
+			continue // skip packages that we can't read
+		}
+
+		for _, dep := range pkg.Dependencies {
+			// dependencies might have version constraints (e.g. "libfoo>=1.0")
+			// so we extract just the package name for comparison
+			depName := strings.FieldsFunc(dep, func(r rune) bool {
+				return r == '>' || r == '<' || r == '='
+			})[0]
+
+			if depName == pkgName {
+				// use the NAME field from the parsed desc file instead of parsing directory name
+				requiredBy = append(requiredBy, pkg.Name)
+				break // no need to check other dependencies for this package
+			}
+		}
+	}
+
+	return requiredBy, nil
+}
