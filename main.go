@@ -25,8 +25,13 @@ func main() {
 	}
 
 	pkgName := os.Args[1]
-	fmt.Println("Fetching package information for:", pkgName)
-	fmt.Println(getPackageInfo(pkgName)) // Testing (it works!)
+
+	pkg, err := getPackageInfo(pkgName)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	displayPackageInfo(pkg)
 }
 
 // gets package info from pacman's local database
@@ -151,4 +156,39 @@ func findRequiredBy(pkgName string) ([]string, error) {
 	}
 
 	return requiredBy, nil
+}
+
+func displayPackageInfo(pkg *Package) {
+	fmt.Printf("\nPackage: %s (%s)\n", pkg.Name, pkg.Version)
+	fmt.Printf("=========================================\n\n")
+
+	if pkg.InstallReason == "Explicitly installed" {
+		fmt.Printf("This package was EXPLICITLY installed by the user.\n")
+	} else {
+		fmt.Printf("This package was INSTALLED AS A DEPENDENCY for another package.\n")
+	}
+
+	fmt.Printf("\n#########################################\n") // for ease of separating dep vs req
+
+	if len(pkg.Dependencies) > 0 {
+		fmt.Printf("\nThis package DEPENDS ON the following packages:\n")
+		for _, dep := range pkg.Dependencies {
+			fmt.Printf(" - %s\n", dep)
+		}
+	}
+
+	fmt.Printf("\n#########################################\n")
+
+	if len(pkg.RequiredBy) > 0 {
+		fmt.Printf("\nThe following packages REQUIRE THIS PACKAGE:\n")
+		for _, req := range pkg.RequiredBy {
+			fmt.Printf(" - %s\n", req)
+		}
+	} else {
+		if pkg.InstallReason == "Installed as a dependency" {
+			fmt.Printf("Not required by any other package (possible orphan package).\n")
+		}
+	}
+
+	fmt.Println("\n=========================================")
 }
