@@ -224,19 +224,6 @@ func reverseChain(chain []string) {
 	}
 }
 
-// returns all explicitly installed packages
-func getExplicitlyInstalledPackages(cache *PackageCache) []string {
-	var explicitPkgs []string
-
-	for _, pkg := range cache.packages {
-		if pkg.InstallReason == "Explicitly installed" {
-			explicitPkgs = append(explicitPkgs, pkg.Name)
-		}
-	}
-
-	return explicitPkgs
-}
-
 // remove version constraints and other modifiers from dependency names (e.g. "libfoo>=1.0" -> "libfoo")
 // refactored this to avoid more redundancy (will need to do more later)
 func cleanDependencyName(dep string) string {
